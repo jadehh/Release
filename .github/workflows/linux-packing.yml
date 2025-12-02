@@ -35,7 +35,7 @@ jobs:
               mkdir -p build-jade-tools-cpu-linux && cd build-jade-tools-cpu-linux && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_INSTALL_PREFIX=../jade-tools-cpu-linux \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-cpu-linux \
                 -D USE_OPENCV_4=OFF \
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
@@ -52,7 +52,7 @@ jobs:
                 mkdir -p build-jade-tools-cuda10-linux && cd build-jade-tools-cuda10-linux && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_INSTALL_PREFIX=../jade-tools-cuda10-linux \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-cuda10-linux \
                 -D USE_OPENCV_4=ON \
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
@@ -71,7 +71,7 @@ jobs:
                 mkdir -p build-jade-tools-cuda11-linux && cd build-jade-tools-cuda11-linux && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_INSTALL_PREFIX=../jade-tools-cuda11-linux \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-cuda11-linux \
                 -D USE_OPENCV_4=ON \
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
@@ -84,13 +84,13 @@ jobs:
 
       - name: Tar Jade Tools
         run: |
-          cd jade-tools-cpu-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz .
+          cd jade_tools-cpu-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz.md5
-          cd jade-tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz .
+          cd jade_tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz.md5
-          cd jade-tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz .
+          cd jade_tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz.md5
-          cd jade-tools-cuda11-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz .
+          cd jade_tools-cuda11-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz.md5
 
       - name: Manage Release Notes

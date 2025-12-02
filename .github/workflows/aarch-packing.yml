@@ -37,7 +37,7 @@ jobs:
               mkdir -p build-jade-tools-cpu-aarch64 && cd build-jade-tools-cpu-aarch64 && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_INSTALL_PREFIX=../jade-tools-cpu-aarch64 \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-cpu-aarch64 \
                 -D USE_OPENCV_4=OFF \
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
@@ -54,7 +54,7 @@ jobs:
                 mkdir -p build-jade-tools-cann6-aarch64 && cd build-jade-tools-cann6-aarch64 && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_INSTALL_PREFIX=../jade-tools-cann6-aarch64 \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-cann6-aarch64 \
                 -D USE_OPENCV_4=ON \
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
@@ -69,9 +69,9 @@ jobs:
 
       - name: Tar Jade Tools
         run: |
-          cd jade-tools-cpu-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz .
+          cd jade_tools-cpu-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz.md5
-          cd jade-tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz .
+          cd jade_tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz.md5
 
       - name: Manage Release Notes
