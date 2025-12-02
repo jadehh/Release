@@ -118,11 +118,6 @@ jobs:
           md5_cpu=$(cat "${file_cpu}.md5" | awk '{print $1}')
           download_url_cpu="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cpu"
           echo "| $file_cpu | \`$md5_cpu\` | [下载]($download_url_cpu) |" >> RELEASE_NOTES.md 
-          # jade tools cuda 主包信息
-          file_cuda="${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz"
-          md5_cuda=$(cat "${file_cuda}.md5" | awk '{print $1}')
-          download_url_cuda="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/file_cuda"
-          echo "| $file_cuda | \`$md5_cuda\` | [下载]($download_url_cuda) |" >> RELEASE_NOTES.md 
           # jade tools cuda10 主包信息
           file_cuda10="${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz"
           md5_cuda10=$(cat "${file_cuda10}.md5" | awk '{print $1}')
@@ -144,12 +139,7 @@ jobs:
           body_path: "RELEASE_NOTES.md"
           files: |
             ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz.md5
-            ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz.md5
             ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz.md5
             ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz.md5
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

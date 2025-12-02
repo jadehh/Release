@@ -71,8 +71,6 @@ jobs:
         run: |
           cd jade-tools-cpu-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz.md5
-          cd jade-tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann-aarch64.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cann-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cann-aarch64.tar.gz.md5
           cd jade-tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz.md5
 
@@ -101,11 +99,6 @@ jobs:
           md5_cpu=$(cat "${file_cpu}.md5" | awk '{print $1}')
           download_url_cpu="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cpu"
           echo "| $file_cpu | \`$md5_cpu\` | [下载]($download_url_cpu) |" >> RELEASE_NOTES.md 
-          # jade tools cann 主包信息
-          file_cann="${{ steps.get_version.outputs.tag_name }}-cann-aarch64.tar.gz"
-          md5_cann=$(cat "${file_cann}.md5" | awk '{print $1}')
-          download_url_cann="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cann"
-          echo "| $file_cann | \`$md5_cann\` | [下载]($download_url_cann) |" >> RELEASE_NOTES.md 
           # jade tools cann6 主包信息
           file_cann6="${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz"
           md5_cann6=$(cat "${file_cann6}.md5" | awk '{print $1}')
@@ -121,10 +114,6 @@ jobs:
           body_path: "RELEASE_NOTES.md"
           files: |
             ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz.md5
-            ${{ steps.get_version.outputs.tag_name }}-cann-aarch64.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cann-aarch64.tar.gz.md5
             ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz
-            ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz.md5
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
