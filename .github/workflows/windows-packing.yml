@@ -62,7 +62,7 @@ jobs:
             `$commonArgs = @(
               '..',
               '-A', 'x64',
-              '-D','CMAKE_INSTALL_PREFIX=../jade_tools-cuda-12-windows',
+              '-D','CMAKE_INSTALL_PREFIX=../jade_tools-cuda12-windows',
               '-D', 'USE_OPENCV_4=ON',
               '-D', 'OPENCV_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
@@ -81,7 +81,7 @@ jobs:
           # 打包 Windows 版本
           7z a ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip jade_tools-cpu-windows/
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip.md5
-          7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip jade_tools-cuda-12-windows/
+          7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip jade_tools-cuda12-windows/
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip.md5
 
       - name: Manage Release Notes
