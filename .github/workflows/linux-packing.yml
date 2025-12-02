@@ -1,0 +1,155 @@
+name: Linux Packing
+
+on: workflow_call
+
+
+jobs:
+  linux-packing:
+    name: Linux Packing
+    runs-on: ubuntu-latest
+    env:
+      TZ: 'Asia/Shanghai'   # 为所有步骤设置时区
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/jade_tools
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          tag=${GITHUB_REF#refs/tags/}
+          echo "tag_name=${tag}" >> $GITHUB_OUTPUT
+          # 提取仓库名称（去掉 -v 及后面的版本号）
+          repo_name=$(echo "${tag}" | sed 's/-v[0-9].*//')
+          echo "repo_name=${repo_name}" >> $GITHUB_OUTPUT
+
+      - name: Build Dynamic Library Jade Tools Cpu  for Linux
+        run: |
+          echo "Build Dynamic Library Jade Tools Cpu  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm  --name build_shared_cuda10 -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
+                      -w /app ghcr.io/jadehh/jade_tools:cpu-devel-ubuntu18.04 bash -c "
+              mkdir -p build-jade-tools-cpu-linux && cd build-jade-tools-cpu-linux && \
+              cmake ..  \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_INSTALL_PREFIX=../jade-tools-cpu-linux \
+                -D USE_OPENCV_4=OFF \
+                -D SQLITE3_DIR=/usr/include \
+                -D BREAKPAD_DIR=/usr/local/include/breakpad \
+                -D SPDLOG_DIR=/usr/local/include/spdlog \
+                -D OPENCV_DIR=/usr/local/opencv  && \
+              make -j $(nproc) && make install  && rm -r ../build-jade-tools-cpu-linux"
+          echo "Build Dynamic Library Jade Tools Cpu  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          
+      - name: Build Dynamic Library Jade Tools CUDA10  for Linux
+        run: |
+          echo "Build Dynamic Library Jade Tools CUDA10  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
+                      -w /app ghcr.io/jadehh/jade_tools:cuda-10.0-devel-ubuntu18.04 bash -c "
+                mkdir -p build-jade-tools-cuda10-linux && cd build-jade-tools-cuda10-linux && \
+                cmake ..  \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_INSTALL_PREFIX=../jade-tools-cuda10-linux \
+                -D USE_OPENCV_4=ON \
+                -D SQLITE3_DIR=/usr/include \
+                -D BREAKPAD_DIR=/usr/local/include/breakpad \
+                -D SPDLOG_DIR=/usr/local/include/spdlog \
+                -D OPENCV_DIR=/usr/local/opencv  \
+                -D HASP_ADAPTER_DIR=/usr/local/include  \
+                -D OPENSSL_DIR=/usr/local/openssl && \
+                make -j $(nproc) && make install  && rm -r ../build-jade-tools-cuda10-linux"
+          echo "Build Dynamic Library Jade Tools CUDA10  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+
+      - name: Build Dynamic Library Jade Tools CUDA11  for Linux
+        run: |
+          echo "Build Dynamic Library Jade Tools CUDA11  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
+                      -w /app ghcr.io/jadehh/jade_tools:cuda-11.8.0-devel-ubuntu22.04 bash -c "
+                mkdir -p build-jade-tools-cuda11-linux && cd build-jade-tools-cuda11-linux && \
+                cmake ..  \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_INSTALL_PREFIX=../jade-tools-cuda11-linux \
+                -D USE_OPENCV_4=ON \
+                -D SQLITE3_DIR=/usr/include \
+                -D BREAKPAD_DIR=/usr/local/include/breakpad \
+                -D SPDLOG_DIR=/usr/local/include/spdlog \
+                -D OPENCV_DIR=/usr/local/opencv  \
+                -D HASP_ADAPTER_DIR=/usr/local/include  \
+                -D OPENSSL_DIR=/usr/local/openssl && \
+                make -j $(nproc) && make install  && rm -r ../build-jade-tools-cuda11-linux"
+          echo "Build Dynamic Library Jade Tools CUDA11  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+
+      - name: Tar Jade Tools
+        run: |
+          cd jade-tools-cpu-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz .
+          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz.md5
+          cd jade-tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz .
+          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz.md5
+          cd jade-tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz .
+          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz.md5
+          cd jade-tools-cuda11-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz .
+          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz.md5
+
+      - name: Manage Release Notes
+        uses: ./.github/actions/release-notes-management
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          token: ${{ secrets.GH_PAT }}
+          path: ./
+
+      - name: Generate Linux Download Information
+        run: |
+          # 如果不存在使用则新建
+          if [ ! -f "RELEASE_NOTES.md" ]; then
+            # 如果文件不存在，运行 cmake 命令生成
+            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
+          fi
+
+          echo  "" >> RELEASE_NOTES.md 
+          echo  "## Linux 下载信息" >> RELEASE_NOTES.md 
+          echo "| 文件名 | MD5校验值 | 下载链接 |" >> RELEASE_NOTES.md 
+          echo "|--------|----------|----------|" >> RELEASE_NOTES.md 
+          
+          # jade tools cpu 主包信息
+          file_cpu="${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz"
+          md5_cpu=$(cat "${file_cpu}.md5" | awk '{print $1}')
+          download_url_cpu="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cpu"
+          echo "| $file_cpu | \`$md5_cpu\` | [下载]($download_url_cpu) |" >> RELEASE_NOTES.md 
+          # jade tools cuda 主包信息
+          file_cuda="${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz"
+          md5_cuda=$(cat "${file_cuda}.md5" | awk '{print $1}')
+          download_url_cuda="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/file_cuda"
+          echo "| $file_cuda | \`$md5_cuda\` | [下载]($download_url_cuda) |" >> RELEASE_NOTES.md 
+          # jade tools cuda10 主包信息
+          file_cuda10="${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz"
+          md5_cuda10=$(cat "${file_cuda10}.md5" | awk '{print $1}')
+          download_url_cuda10="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cuda10"
+          echo "| $file_cuda10 | \`$md5_cuda10\` | [下载]($download_url_cuda10) |" >> RELEASE_NOTES.md 
+          # jade tools cuda11 主包信息
+          file_cuda11="${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz"
+          md5_cuda11=$(cat "${file_cuda11}.md5" | awk '{print $1}')
+          download_url_cuda11="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cuda11"
+          echo "| $file_cuda11 | \`$md5_cuda11\` | [下载]($download_url_cuda11) |" >> RELEASE_NOTES.md 
+          
+
+      - name: Upload Linux Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz.md5
+            ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz.md5
+            ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz.md5
+            ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz.md5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}

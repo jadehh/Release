@@ -1,0 +1,150 @@
+name: Windows Packing
+
+on: workflow_call
+
+jobs:
+  windows-packing:
+    name: Windows Packing
+    runs-on: windows-latest
+    env:
+      TZ: 'Asia/Shanghai'
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/jade_tools
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          $tag = $env:GITHUB_REF -replace 'refs/tags/',''
+          echo "tag_name=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $repo_name = $tag -replace '-v\d+.*',''
+          echo "repo_name=$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "lib_name=lib$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build Dynamic Library Jade Tools Cpu for Windows With Docker
+        shell: pwsh
+        run: |
+          echo "Build Dynamic Library Jade Tools Cpu  for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:cpu-devel-windows2022 pwsh -Command "
+            & C:\\scripts\\start-with-h-drive.cmd;
+            vcpkg integrate remove;
+            git config --global --add safe.directory C:/app/
+            mkdir -Force build-jade-tools-cpu-windows && cd build-jade-tools-cpu-windows;
+            `$commonArgs = @(
+              '..',
+              '-A', 'Win32',
+              '-D','CMAKE_INSTALL_PREFIX=../jade-tools-cpu-windows',
+              '-D', 'USE_OPENCV_4=OFF',
+              '-D', 'OPENCV_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed'
+            );
+            cmake `$commonArgs
+            cmake --build . --config Release --target install;
+            cd ../ && cmd /c 'rmdir /s /q build-jade-tools-cpu-windows;'" 
+            echo "Build Dynamic Library Jade Tools Cpu for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')";
+          docker rmi ghcr.io/jadehh/jade_tools:cpu-devel-windows2022
+
+      - name: Build Dynamic Library Jade Tools CUDA for Windows With Docker
+        shell: pwsh
+        run: |
+          echo "Build Dynamic Library Jade Tools CUDA  for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:cuda-12.8.0-devel-windows2022 pwsh -Command "
+            & C:\\scripts\\start-with-h-drive.cmd;
+            vcpkg integrate remove;
+            git config --global --add safe.directory C:/app/
+            mkdir -Force build-jade-tools-cuda-12-windows && cd build-jade-tools-cuda-12-windows;
+            `$commonArgs = @(
+              '..',
+              '-A', 'Win32',
+              '-D','CMAKE_INSTALL_PREFIX=../jade-tools-cuda-12-windows',
+              '-D', 'USE_OPENCV_4=ON',
+              '-D', 'OPENCV_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'HASP_ADAPTER_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed'
+             );
+            cmake `$commonArgs
+            cmake --build . --config Release --target install;
+            cd ../ && cmd /c 'rmdir /s /q build-jade-tools-cuda-12-windows;'" 
+          echo "Build Dynamic Library Jade Tools CUDA  for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+      - name: Zip File
+        run: |
+          # 打包 Windows 版本
+          7z a ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip jade-tools-cpu-windows/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip.md5
+          7z a ${{ steps.get_version.outputs.tag_name }}-cuda-windows.zip jade-tools-cuda-12-windows/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cuda-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cuda-windows.zip.md5
+          7z a ${{ steps.get_version.outputs.tag_name }}-cuda-12-windows.zip jade-tools-cuda-12-windows/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cuda-12-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cuda-12-windows.zip.md5
+
+      - name: Manage Release Notes
+        uses: ./.github/actions/release-notes-management
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          token: ${{ secrets.GH_PAT }}
+          path: ./
+
+      - name: Generate Windows Download Information
+        run: |
+          # 检查文件是否存在（PowerShell语法）
+          if (-not (Test-Path "RELEASE_NOTES.md")) {
+            # 如果文件不存在，运行 cmake 命令生成
+            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
+          }
+          
+          # 确保文件存在
+          if (-not (Test-Path "RELEASE_NOTES.md")) {
+            New-Item -Path "RELEASE_NOTES.md" -ItemType File
+          }
+          
+          # 添加 Windows 下载信息（PowerShell语法）
+          Add-Content -Path "RELEASE_NOTES.md" -Value ""
+          Add-Content -Path "RELEASE_NOTES.md" -Value "`n## Windows 下载信息"
+          Add-Content -Path "RELEASE_NOTES.md" -Value "| 文件名 | MD5校验值 | 下载链接 |"
+          Add-Content -Path "RELEASE_NOTES.md" -Value "|--------|----------|----------|"
+          
+          # Windows 包信息（PowerShell语法）
+          $jade_tools_cpu_file = "${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip"
+          if (Test-Path $jade_tools_cpu_file) {
+            $md5 = Get-Content "$jade_tools_cpu_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_cpu_file"
+            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_cpu_file | ``$md5`` | [下载]($download_url) |"
+          }
+          $jade_tools_cuda_file = "${{ steps.get_version.outputs.tag_name }}-cuda-windows.zip"
+          if (Test-Path $jade_tools_cuda_file) {
+            $md5 = Get-Content "$jade_tools_cuda_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_cuda_file"
+            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_cuda_file | ``$md5`` | [下载]($download_url) |"
+          }
+          $jade_tools_cuda_12_file = "${{ steps.get_version.outputs.tag_name }}-cuda-12-windows.zip"
+          if (Test-Path $jade_tools_cuda_12_file) {
+            $md5 = Get-Content "$jade_tools_cuda_12_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_cuda_12_file"
+            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_cuda_12_file | ``$md5`` | [下载]($download_url) |"
+          }
+
+      - name: Upload Windows Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip.md5
+            ${{ steps.get_version.outputs.tag_name }}-cuda-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-cuda-windows.zip.md5
+            ${{ steps.get_version.outputs.tag_name }}-cuda-12-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-cuda-12-windows.zip.md5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
