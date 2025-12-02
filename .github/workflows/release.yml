@@ -11,14 +11,14 @@ jobs:
   prepare_release:
     uses: ./.github/workflows/create-release.yml
     secrets: inherit
-#  linux_packing:
-#    needs: prepare_release
-#    uses: ./.github/workflows/linux-packing.yml
-#    secrets: inherit
-#  windows_packing:
-#    needs: prepare_release
-#    uses: ./.github/workflows/windows-packing.yml
-#    secrets: inherit
+  linux_packing:
+    needs: prepare_release
+    uses: ./.github/workflows/linux-packing.yml
+    secrets: inherit
+  windows_packing:
+    needs: prepare_release
+    uses: ./.github/workflows/windows-packing.yml
+    secrets: inherit
   aarch64_packing:
     needs: prepare_release
     uses: ./.github/workflows/aarch-packing.yml
