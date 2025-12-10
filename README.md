@@ -1,8 +1,7 @@
 #  Jade Tools C++ 工具合集 
 ## 更新时间 
-2025-12-09 17:38:39 
+2025-12-10 15:56:13 
 # 更新日志
-## v2.1.2
-* 修复JSharedMemoryFactory无法导出动态库的bug
-* 新增获取Logger Level的方法, 用于获取当前Logger的Level
+## v2.1.3
+* 新增jade::command::execute方法, 用于执行shell命令, 并返回命令的输出结果, 失败内容, 是否成功, 退出码
 ----
