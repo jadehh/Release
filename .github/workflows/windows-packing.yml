@@ -15,6 +15,8 @@ jobs:
           repository: jadehh/jade_tools
           ref: main
           token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
 
       - name: Extract Version from Tag
         id: get_version
@@ -25,19 +27,19 @@ jobs:
           echo "repo_name=$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           echo "lib_name=lib$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Build Dynamic Library Jade Tools Cpu for Windows With Docker
+      - name: Build Dynamic Library Jade Tools Slim for Windows With Docker
         shell: pwsh
         run: |
-          echo "Build Dynamic Library Jade Tools Cpu  for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:cpu-devel-windows2022 pwsh -Command "
+          echo "Build Dynamic Library Jade Tools Slim for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.0-slim-windows2022 pwsh -Command "
             & C:\\scripts\\start-with-h-drive.cmd;
             vcpkg integrate remove;
             git config --global --add safe.directory C:/app/
-            mkdir -Force build-jade-tools-cpu-windows && cd build-jade-tools-cpu-windows;
+            mkdir -Force build-jade-tools-slim-windows && cd build-jade-tools-slim-windows;
             `$commonArgs = @(
               '..',
               '-A', 'Win32',
-              '-D','CMAKE_INSTALL_PREFIX=../jade_tools-cpu-windows',
+              '-D','CMAKE_INSTALL_PREFIX=../jade_tools-slim-windows',
               '-D', 'USE_OPENCV_4=OFF',
               '-D', 'OPENCV_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
@@ -46,9 +48,36 @@ jobs:
             );
             cmake `$commonArgs
             cmake --build . --config Release --target install;
+            cd ../ && cmd /c 'rmdir /s /q build-jade-tools-slim-windows;'" 
+            echo "Build Dynamic Library Jade Tools Slim for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')";
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-slim-windows2022
+
+      - name: Build Dynamic Library Jade Tools Cpu for Windows With Docker
+        shell: pwsh
+        run: |
+          echo "Build Dynamic Library Jade Tools Cpu for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.0-cpu-windows2022 pwsh -Command "
+            & C:\\scripts\\start-with-h-drive.cmd;
+            vcpkg integrate remove;
+            git config --global --add safe.directory C:/app/
+            mkdir -Force build-jade-tools-cpu-windows && cd build-jade-tools-cpu-windows;
+            `$commonArgs = @(
+              '..',
+              '-A', 'Win32',
+              '-D','CMAKE_INSTALL_PREFIX=../jade_tools-cpu-windows',
+              '-D', 'USE_OPENCV_4=ON',
+              '-D', 'OPENCV_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'HASP_ADAPTER_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed'
+            );
+            cmake `$commonArgs
+            cmake --build . --config Release --target install;
             cd ../ && cmd /c 'rmdir /s /q build-jade-tools-cpu-windows;'" 
             echo "Build Dynamic Library Jade Tools Cpu for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')";
-          docker rmi ghcr.io/jadehh/jade_tools:cpu-devel-windows2022
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cpu-windows2022
 
       - name: Build Dynamic Library Jade Tools CUDA for Windows With Docker
         shell: pwsh
@@ -79,6 +108,8 @@ jobs:
       - name: Zip File
         run: |
           # 打包 Windows 版本
+          7z a ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip jade_tools-slim-windows/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip > ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip.md5
           7z a ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip jade_tools-cpu-windows/
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip.md5
           7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip jade_tools-cuda12-windows/
@@ -109,8 +140,15 @@ jobs:
           Add-Content -Path "RELEASE_NOTES.md" -Value "`n## Windows 下载信息"
           Add-Content -Path "RELEASE_NOTES.md" -Value "| 文件名 | MD5校验值 | 下载链接 |"
           Add-Content -Path "RELEASE_NOTES.md" -Value "|--------|----------|----------|"
+        
           
           # Windows 包信息（PowerShell语法）
+          $jade_tools_slim_file = "${{ steps.get_version.outputs.tag_name }}-slim-windows.zip"
+          if (Test-Path $jade_tools_slim_file) {
+            $md5 = Get-Content "$jade_tools_slim_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_slim_file"
+            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_slim_file | ``$md5`` | [下载]($download_url) |"
+          }
           $jade_tools_cpu_file = "${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip"
           if (Test-Path $jade_tools_cpu_file) {
             $md5 = Get-Content "$jade_tools_cpu_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
@@ -132,6 +170,7 @@ jobs:
           name: "${{ steps.get_version.outputs.tag_name }}"
           body_path: "RELEASE_NOTES.md"
           files: |
+            ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip
             ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip
             ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip
         env:

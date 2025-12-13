@@ -17,6 +17,8 @@ jobs:
           repository: jadehh/jade_tools
           ref: main
           token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
 
       - name: Extract Version from Tag
         id: get_version
@@ -29,20 +31,41 @@ jobs:
           
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      - name: Build Dynamic Library Jade Tools Cpu  for AARCH64
+
+      - name: Build Dynamic Library Jade Tools Slim  for AARCH64
         run: |
-          echo "Build Dynamic Library Jade Tools Cpu  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "Build Dynamic Library Jade Tools Slim  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:cpu-devel-aarch64-ubuntu18.04 bash -c "
-              mkdir -p build-jade-tools-cpu-aarch64 && cd build-jade-tools-cpu-aarch64 && \
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-slim-devel-ubuntu18.04 bash -c "
+              mkdir -p build-jade-tools-slim-aarch64 && cd build-jade-tools-slim-aarch64 && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_INSTALL_PREFIX=../jade_tools-cpu-aarch64 \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-slim-aarch64 \
                 -D USE_OPENCV_4=OFF \
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  && \
+              make -j $(nproc) && make install  && rm -r ../build-jade-tools-slim-aarch64"
+          echo "Build Dynamic Library Jade Tools Slim  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"        
+
+      - name: Build Dynamic Library Jade Tools Cpu  for AARCH64
+        run: |
+          echo "Build Dynamic Library Jade Tools Cpu  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-cpu-devel-ubuntu18.04 bash -c "
+              mkdir -p build-jade-tools-cpu-aarch64 && cd build-jade-tools-cpu-aarch64 && \
+              cmake ..  \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_INSTALL_PREFIX=../jade_tools-cpu-aarch64 \
+                -D USE_OPENCV_4=ON \
+                -D SQLITE3_DIR=/usr/include \
+                -D OPENSSL_DIR=/usr/include \
+                -D BREAKPAD_DIR=/usr/local/include/breakpad \
+                -D SPDLOG_DIR=/usr/local/include/spdlog \
+                -D OPENCV_DIR=/usr/local/opencv  \
+                -D HASP_ADAPTER_DIR=/usr/local/include  \
+                -D OPENSSL_DIR=/usr/local/openssl 
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-cpu-aarch64"
           echo "Build Dynamic Library Jade Tools Cpu  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
@@ -50,18 +73,18 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools CANN6  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:cann6-devel-aarch64-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-cann6-ubuntu18.04 bash -c "
                 mkdir -p build-jade-tools-cann6-aarch64 && cd build-jade-tools-cann6-aarch64 && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
                 -D CMAKE_INSTALL_PREFIX=../jade_tools-cann6-aarch64 \
                 -D USE_OPENCV_4=ON \
                 -D SQLITE3_DIR=/usr/include \
+                -D OPENSSL_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  \
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
-                -D OPENSSL_DIR=/usr/local/openssl \
                 -D ASCEND_DIR=/usr/local/Ascend/nnrt/6.0.0.alpha001/aarch64-linux && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cann6-aarch64"
           echo "Build Dynamic Library Jade Tools CANN6  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -69,8 +92,13 @@ jobs:
 
       - name: Tar Jade Tools
         run: |
+          # 压缩 slim 包
+          cd jade_tools-slim-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz .
+          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz.md5
+          # 压缩 cpu 包
           cd jade_tools-cpu-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz.md5
+          # 压缩 cann6 包
           cd jade_tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz.md5
 
@@ -93,7 +121,11 @@ jobs:
           echo  "## AARCH64 下载信息" >> RELEASE_NOTES.md 
           echo "| 文件名 | MD5校验值 | 下载链接 |" >> RELEASE_NOTES.md 
           echo "|--------|----------|----------|" >> RELEASE_NOTES.md 
-          
+          # jade tools slim 主包信息
+          file_slim="${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz"
+          md5_slim=$(cat "${file_slim}.md5" | awk '{print $1}')
+          download_url_slim="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_slim"
+          echo "| $file_slim | \`$md5_slim\` | [下载]($download_url_slim) |" >> RELEASE_NOTES.md 
           # jade tools cpu 主包信息
           file_cpu="${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz"
           md5_cpu=$(cat "${file_cpu}.md5" | awk '{print $1}')
@@ -113,6 +145,7 @@ jobs:
           name: "${{ steps.get_version.outputs.tag_name }}"
           body_path: "RELEASE_NOTES.md"
           files: |
+            ${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz
             ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz
             ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz
         env:
