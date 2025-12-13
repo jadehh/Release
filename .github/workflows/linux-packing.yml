@@ -55,7 +55,7 @@ jobs:
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
                 -D CMAKE_INSTALL_PREFIX=../jade_tools-cpu-linux \
-                -D USE_OPENCV_4=OFF \
+                -D USE_OPENCV_4=ON \
                 -D SQLITE3_DIR=/usr/include \
                 -D OPENSSL_DIR=/usr/include \
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
