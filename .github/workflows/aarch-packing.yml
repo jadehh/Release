@@ -59,13 +59,13 @@ jobs:
                 -D CMAKE_BUILD_TYPE=Release \
                 -D CMAKE_INSTALL_PREFIX=../jade_tools-cpu-aarch64 \
                 -D USE_OPENCV_4=ON \
+                -D USE_OPENCV_CUDA=OFF \
                 -D SQLITE3_DIR=/usr/include \
                 -D OPENSSL_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  \
-                -D HASP_ADAPTER_DIR=/usr/local/include  \
-                -D OPENSSL_DIR=/usr/local/openssl 
+                -D HASP_ADAPTER_DIR=/usr/local/include  &&\
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-cpu-aarch64"
           echo "Build Dynamic Library Jade Tools Cpu  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
@@ -79,6 +79,7 @@ jobs:
                 -D CMAKE_BUILD_TYPE=Release \
                 -D CMAKE_INSTALL_PREFIX=../jade_tools-cann6-aarch64 \
                 -D USE_OPENCV_4=ON \
+                -D USE_OPENCV_CUDA=OFF \
                 -D SQLITE3_DIR=/usr/include \
                 -D OPENSSL_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
