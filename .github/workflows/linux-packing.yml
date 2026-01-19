@@ -110,8 +110,6 @@ jobs:
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-slim-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-slim-linux.tar.gz.md5
           cd jade_tools-cpu-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz.md5
-          cd jade_tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda-linux.tar.gz.md5
           cd jade_tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz .
           cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz.md5
           cd jade_tools-cuda11-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz .
@@ -129,7 +127,7 @@ jobs:
           # 如果不存在使用则新建
           if [ ! -f "RELEASE_NOTES.md" ]; then
             # 如果文件不存在，运行 cmake 命令生成
-            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
+            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
           fi
 
           echo  "" >> RELEASE_NOTES.md 

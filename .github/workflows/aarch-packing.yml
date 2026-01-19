@@ -115,7 +115,7 @@ jobs:
           # 如果不存在使用则新建
           if [ ! -f "RELEASE_NOTES.md" ]; then
             # 如果文件不存在，运行 cmake 命令生成
-            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
+            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
           fi
 
           echo  "" >> RELEASE_NOTES.md 
