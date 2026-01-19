@@ -1,0 +1,101 @@
+name: Windows Packing
+
+on: workflow_call
+
+jobs:
+  windows-packing:
+    name: Windows Packing
+    runs-on: windows-latest
+    env:
+      TZ: 'Asia/Shanghai'
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/inference
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          $tag = $env:GITHUB_REF -replace 'refs/tags/',''
+          echo "tag_name=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $repo_name = $tag -replace '-v\d+.*',''
+          echo "repo_name=$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "lib_name=lib$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build Dynamic Library Inference CUDA for Windows With Docker
+        shell: pwsh
+        run: |
+          echo "Build Dynamic Library Inference CUDA  for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/inference:1.0.0-cuda12-windows2022 pwsh -Command "
+            & C:\\scripts\\start-with-h-drive.cmd;
+            vcpkg integrate remove;
+            git config --global --add safe.directory C:/app/
+            mkdir -Force build-inference-cuda-12-windows && cd build-inference-cuda-12-windows;
+            `$commonArgs = @(
+                              '..',
+                              '-A','x64'
+                              '-D','CUDA_DIR=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8',
+                              '-D', 'CLIPPER_DIR=C:\vcpkg\installed',
+                              '-D','TENSORRT_DIR=C:\SDKS\TensorRT-10.6.0.26',
+                              '-D','OPENCV_DIR=C:\vcpkg\installed',
+                              '-D','CMAKE_INSTALL_PREFIX=../inference-cuda12-windows'
+                              '-D','CUDA_ARCH_BIN=61;75');
+            cmake `$commonArgs
+            cmake --build . --config Release --target install;
+            cd ../ && cmd /c 'rmdir /s /q build-inference-cuda-12-windows;'" 
+          echo "Build Dynamic Library Inference CUDA  for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+      - name: Zip File
+        run: |
+          # 打包 Windows 版本
+          7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip inference-cuda12-windows/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip.md5
+
+      - name: Manage Release Notes
+        uses: ./.github/actions/release-notes-management
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          token: ${{ secrets.GH_PAT }}
+          path: ./
+
+      - name: Generate Windows Download Information
+        run: |
+          # 检查文件是否存在（PowerShell语法）
+          if (-not (Test-Path "RELEASE_NOTES.md")) {
+            # 如果文件不存在，运行 cmake 命令生成
+            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
+          }
+          
+          # 确保文件存在
+          if (-not (Test-Path "RELEASE_NOTES.md")) {
+            New-Item -Path "RELEASE_NOTES.md" -ItemType File
+          }
+          
+          # 添加 Windows 下载信息（PowerShell语法）
+          Add-Content -Path "RELEASE_NOTES.md" -Value ""
+          Add-Content -Path "RELEASE_NOTES.md" -Value "`n## Windows 下载信息"
+          Add-Content -Path "RELEASE_NOTES.md" -Value "| 文件名 | MD5校验值 | 下载链接 |"
+          Add-Content -Path "RELEASE_NOTES.md" -Value "|--------|----------|----------|"
+          $inference_cuda_12_file = "${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip"
+          if (Test-Path $inference_cuda_12_file) {
+            $md5 = Get-Content "$inference_cuda_12_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$inference_cuda_12_file"
+            Add-Content -Path "RELEASE_NOTES.md" -Value "| $inference_cuda_12_file | ``$md5`` | [下载]($download_url) |"
+          }
+
+      - name: Upload Windows Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}

@@ -1,0 +1,96 @@
+name: AARCH64 Packing
+
+on: workflow_call
+
+
+jobs:
+  linux-packing:
+    name: AARCH64 Packing
+    runs-on: ubuntu-latest
+    env:
+      TZ: 'Asia/Shanghai'   # 为所有步骤设置时区
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/inference
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          tag=${GITHUB_REF#refs/tags/}
+          echo "tag_name=${tag}" >> $GITHUB_OUTPUT
+          # 提取仓库名称（去掉 -v 及后面的版本号）
+          repo_name=$(echo "${tag}" | sed 's/-v[0-9].*//')
+          echo "repo_name=${repo_name}" >> $GITHUB_OUTPUT
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build Dynamic Library Inference CANN6  for AARCH64
+        run: |
+          echo "Build Dynamic Library Inference CANN6  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
+                      -w /app ghcr.io/jadehh/inference:1.0.0-cann6-ubuntu18.04 bash -c "
+                mkdir -p build-inference-cann6-aarch64 && cd build-inference-cann6-aarch64 && \
+                cmake ..  \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D CMAKE_INSTALL_PREFIX=../inference-cann6-aarch64 \
+                -D USE_OPENCV_4=ON \
+                -D USE_OPENCV_CUDA=OFF \
+                -D SQLITE3_DIR=/usr/include \
+                -D OPENSSL_DIR=/usr/include \
+                -D BREAKPAD_DIR=/usr/local/include/breakpad \
+                -D SPDLOG_DIR=/usr/local/include/spdlog \
+                -D OPENCV_DIR=/usr/local/opencv  \
+                -D HASP_ADAPTER_DIR=/usr/local/include  \
+                -D ASCEND_DIR=/usr/local/Ascend/nnrt/6.0.0.alpha001/aarch64-linux && \
+                make -j $(nproc) && make install  && rm -r ../build-inference-cann6-aarch64"
+          echo "Build Dynamic Library Inference CANN6  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+      - name: Tar Inference
+        run: |
+          # 压缩 cann6 包
+          cd inference-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz .
+          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz.md5
+
+      - name: Manage Release Notes
+        uses: ./.github/actions/release-notes-management
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          token: ${{ secrets.GH_PAT }}
+          path: ./
+
+      - name: Generate Linux Download Information
+        run: |
+          # 如果不存在使用则新建
+          if [ ! -f "RELEASE_NOTES.md" ]; then
+            # 如果文件不存在，运行 cmake 命令生成
+            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
+          fi
+
+          echo  "" >> RELEASE_NOTES.md 
+          echo  "## AARCH64 下载信息" >> RELEASE_NOTES.md 
+          echo "| 文件名 | MD5校验值 | 下载链接 |" >> RELEASE_NOTES.md 
+          echo "|--------|----------|----------|" >> RELEASE_NOTES.md 
+          # inference cann6 主包信息
+          file_cann6="${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz"
+          md5_cann6=$(cat "${file_cann6}.md5" | awk '{print $1}')
+          download_url_cann6="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cann6"
+          echo "| $file_cann6 | \`$md5_cann6\` | [下载]($download_url_cann6) |" >> RELEASE_NOTES.md 
+
+      - name: Upload AARCH64 Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
