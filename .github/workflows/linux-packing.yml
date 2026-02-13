@@ -45,6 +45,8 @@ jobs:
                 -D OPENCV_DIR=/usr/local/opencv  && \
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-slim-linux"
           echo "Build Dynamic Library Jade Tools Slim  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-slim-devel-ubuntu18.04 
+
 
       - name: Build Dynamic Library Jade Tools Cpu  for Linux
         run: |
@@ -65,6 +67,7 @@ jobs:
                 -D OPENCV_DIR=/usr/local/opencv  && \
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-cpu-linux"
           echo "Build Dynamic Library Jade Tools Cpu  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cpu-devel-ubuntu18.04 
           
       - name: Build Dynamic Library Jade Tools CUDA10  for Linux
         run: |
@@ -84,6 +87,7 @@ jobs:
                 -D OPENCV_DIR=/usr/local/opencv  && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cuda10-linux"
           echo "Build Dynamic Library Jade Tools CUDA10  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cuda10-devel-ubuntu18.04 
 
       - name: Build Dynamic Library Jade Tools CUDA11  for Linux
         run: |
@@ -103,6 +107,7 @@ jobs:
                 -D OPENCV_DIR=/usr/local/opencv   && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cuda11-linux"
           echo "Build Dynamic Library Jade Tools CUDA11  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cuda11-devel-ubuntu22.04 
 
       - name: Tar Jade Tools
         run: |
