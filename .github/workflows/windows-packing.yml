@@ -31,7 +31,7 @@ jobs:
         shell: pwsh
         run: |
           echo "Build Dynamic Library Jade Tools Slim for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.0-slim-windows2022 pwsh -Command "
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.1-slim-windows2022 pwsh -Command "
             & C:\\scripts\\start-with-h-drive.cmd;
             vcpkg integrate remove;
             git config --global --add safe.directory C:/app/
@@ -44,19 +44,20 @@ jobs:
               '-D', 'OPENCV_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
-              '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'MODBUS_DIR=H:/SDKS/vcpkg/installed'
             );
             cmake `$commonArgs
             cmake --build . --config Release --target install;
             cd ../ && cmd /c 'rmdir /s /q build-jade-tools-slim-windows;'" 
             echo "Build Dynamic Library Jade Tools Slim for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')";
-          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-slim-windows2022
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.1-slim-windows2022
 
       - name: Build Dynamic Library Jade Tools Cpu for Windows With Docker
         shell: pwsh
         run: |
           echo "Build Dynamic Library Jade Tools Cpu for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.0-cpu-windows2022 pwsh -Command "
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.1-cpu-windows2022 pwsh -Command "
             & C:\\scripts\\start-with-h-drive.cmd;
             vcpkg integrate remove;
             git config --global --add safe.directory C:/app/
@@ -72,19 +73,20 @@ jobs:
               '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed'
               '-D', 'HASP_ADAPTER_DIR=H:/SDKS/vcpkg/installed'
-              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'MODBUS_DIR=H:/SDKS/vcpkg/installed'
             );
             cmake `$commonArgs
             cmake --build . --config Release --target install;
             cd ../ && cmd /c 'rmdir /s /q build-jade-tools-cpu-windows;'" 
             echo "Build Dynamic Library Jade Tools Cpu for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')";
-          docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cpu-windows2022
+          docker rmi ghcr.io/jadehh/jade_tools:1.0.1-cpu-windows2022
 
       - name: Build Dynamic Library Jade Tools CUDA for Windows With Docker
         shell: pwsh
         run: |
           echo "Build Dynamic Library Jade Tools CUDA  for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.0-cuda12-windows2022 pwsh -Command "
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/jade_tools:1.0.1-cuda12-windows2022 pwsh -Command "
             & C:\\scripts\\start-with-h-drive.cmd;
             vcpkg integrate remove;
             git config --global --add safe.directory C:/app/
@@ -99,7 +101,8 @@ jobs:
               '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed'
               '-D', 'HASP_ADAPTER_DIR=H:/SDKS/vcpkg/installed'
-              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed'
+              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'MODBUS_DIR=H:/SDKS/vcpkg/installed'
              );
             cmake `$commonArgs
             cmake --build . --config Release --target install;

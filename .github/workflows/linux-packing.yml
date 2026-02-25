@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools Slim  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm  --platform linux/amd64 --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-slim-devel-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-slim-devel-ubuntu18.04 bash -c "
               mkdir -p build-jade-tools-slim-linux && cd build-jade-tools-slim-linux && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -42,7 +42,8 @@ jobs:
                 -D SQLITE3_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
-                -D OPENCV_DIR=/usr/local/opencv  && \
+                -D OPENCV_DIR=/usr/local/opencv \
+                -D MODBUS_DIR=/usr/include  && \
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-slim-linux"
           echo "Build Dynamic Library Jade Tools Slim  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker rmi ghcr.io/jadehh/jade_tools:1.0.0-slim-devel-ubuntu18.04 
@@ -52,7 +53,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools Cpu  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-cpu-devel-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-cpu-devel-ubuntu18.04 bash -c "
               mkdir -p build-jade-tools-cpu-linux && cd build-jade-tools-cpu-linux && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -64,7 +65,8 @@ jobs:
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
-                -D OPENCV_DIR=/usr/local/opencv  && \
+                -D OPENCV_DIR=/usr/local/opencv \
+                -D MODBUS_DIR=/usr/include  && \
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-cpu-linux"
           echo "Build Dynamic Library Jade Tools Cpu  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cpu-devel-ubuntu18.04 
@@ -73,7 +75,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools CUDA10  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-cuda10-devel-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-cuda10-devel-ubuntu18.04 bash -c "
                 mkdir -p build-jade-tools-cuda10-linux && cd build-jade-tools-cuda10-linux && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -84,7 +86,8 @@ jobs:
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
-                -D OPENCV_DIR=/usr/local/opencv  && \
+                -D OPENCV_DIR=/usr/local/opencv \
+                -D MODBUS_DIR=/usr/include  && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cuda10-linux"
           echo "Build Dynamic Library Jade Tools CUDA10  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cuda10-devel-ubuntu18.04 
@@ -93,7 +96,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools CUDA11  for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.0-cuda11-devel-ubuntu22.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-cuda11-devel-ubuntu22.04 bash -c "
                 mkdir -p build-jade-tools-cuda11-linux && cd build-jade-tools-cuda11-linux && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -104,7 +107,8 @@ jobs:
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
-                -D OPENCV_DIR=/usr/local/opencv   && \
+                -D OPENCV_DIR=/usr/local/opencv \
+                -D MODBUS_DIR=/usr/include  && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cuda11-linux"
           echo "Build Dynamic Library Jade Tools CUDA11  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker rmi ghcr.io/jadehh/jade_tools:1.0.0-cuda11-devel-ubuntu22.04 
