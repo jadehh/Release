@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools Slim  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-slim-devel-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.2-slim-devel-ubuntu18.04 bash -c "
               mkdir -p build-jade-tools-slim-aarch64 && cd build-jade-tools-slim-aarch64 && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -46,7 +46,8 @@ jobs:
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  \
-                -D MODBUS_DIR=/usr/include  && \
+                -D MODBUS_DIR=/usr/include \
+                -D PUGIXML_DIR=/usr/include && \
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-slim-aarch64"
           echo "Build Dynamic Library Jade Tools Slim  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"        
 
@@ -54,7 +55,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools Cpu  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-cpu-devel-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.2-cpu-devel-ubuntu18.04 bash -c "
               mkdir -p build-jade-tools-cpu-aarch64 && cd build-jade-tools-cpu-aarch64 && \
               cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -67,7 +68,8 @@ jobs:
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  \
                 -D HASP_ADAPTER_DIR=/usr/local/include \
-                -D MODBUS_DIR=/usr/include  && \
+                -D MODBUS_DIR=/usr/include \
+                -D PUGIXML_DIR=/usr/include && \
               make -j $(nproc) && make install  && rm -r ../build-jade-tools-cpu-aarch64"
           echo "Build Dynamic Library Jade Tools Cpu  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
@@ -75,7 +77,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools CANN6  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.1-cann6-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.2-cann6-ubuntu18.04 bash -c "
                 mkdir -p build-jade-tools-cann6-aarch64 && cd build-jade-tools-cann6-aarch64 && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
@@ -89,7 +91,8 @@ jobs:
                 -D OPENCV_DIR=/usr/local/opencv  \
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
                 -D ASCEND_DIR=/usr/local/Ascend/nnrt/6.0.0.alpha001/aarch64-linux \
-                -D MODBUS_DIR=/usr/include  && \
+                -D MODBUS_DIR=/usr/include \
+                -D PUGIXML_DIR=/usr/include && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cann6-aarch64"
           echo "Build Dynamic Library Jade Tools CANN6  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
