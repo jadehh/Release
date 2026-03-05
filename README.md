@@ -1,16 +1,14 @@
 #  Inference C++ 推理框架 
 ## 更新时间 
-2026-02-06 13:41:10 
+2026-03-05 23:38:56 
 # 更新日志
-
-## v1.0.6
-* 使用最新的jade_tools库,必须升级,因为更改了JTextBox库的接口改为了JQuad库
-* 修改项目名称为inference
-* 使用JInferenceUtils 转换void*指针,防止内存泄漏
-* 模型转换日志输出只有在Trace级别下才会输出,其他级别下不会输出
-* 修复如果AlgorithmConfig被外部释放,导致inference内部悬空指针问题
-* 使用最新版本的jade_tools库,必须升级,因为更改了Logger库的接口
-* Inference对外暴露模型构建(build)和模型初始化(init)的方法,build不支持多线程,init函数支持多线程
-* NNRT Inference 模型加载失败,输出失败的原因,不在删除模型文件,支持一个线程中运行多个模型,解决了一个线程中只能运行一个模型的问题
-* DBPostProcess 四个点的顺序是左上角,右上角,右下角,左下角，这四个点是按照顺时针方向排列的
+## v1.0.7
+* 单例模式使用局部静态变量,避免了多线程环境下的线程安全问题
+* NVLogger使用代理模式, The logger passed into createInferRuntime differs from one already provided for an existing builder, runtime, or refitter. Uses of the global logger, returned by nvinfer1::getLogger(), will return the existing value.
+* 更改Tensorrt Inference 析构函数的释放顺序,先释放推理上下文,然后释放引擎,最后释放运行时
+* 解决预处理存在的显存和内存泄漏的bug,std和mean只需要初始化一次,不需要在推理前每次初始化
+* 优化Inference库日志输出
+* 只有在主线程中构建模型的时候,才能退出,其他的在线程中无法退出,只能返回false,给主线程处理
+* 代码项目结构重构
+* NNRtRTInference 类,支持CPU上的图像推理
 ----
