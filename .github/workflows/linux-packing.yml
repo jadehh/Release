@@ -61,7 +61,7 @@ jobs:
               -D CLIPPER_DIR=/usr/include \
               -D TENSORRT_DIR=/usr/local/Tensorrt \
               -D OPENCV_DIR=/usr/local/opencv \
-              -D CUDA_ARCH_BIN='61;75;80;86;89;90' && \
+              -D CUDA_ARCH_BIN='61;75;86;89;' && \
             make -j $(nproc) && make install  && rm -r ../build-inference-cuda11-linux"
           echo "Build Dynamic Library Inference CUDA11  for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
