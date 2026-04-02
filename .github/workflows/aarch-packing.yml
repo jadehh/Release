@@ -43,6 +43,7 @@ jobs:
                 -D CMAKE_INSTALL_PREFIX=../jade_tools-slim-aarch64 \
                 -D USE_OPENCV_4=OFF \
                 -D SQLITE3_DIR=/usr/include \
+                -D OPENSSL_DIR=/usr/include \
                 -D BREAKPAD_DIR=/usr/local/include/breakpad \
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  \

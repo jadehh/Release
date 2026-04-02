@@ -45,6 +45,7 @@ jobs:
               '-D', 'BREAKPAD_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'SPDLOG_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'SQLITE3_DIR=H:/SDKS/vcpkg/installed',
+              '-D', 'OPENSSL_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'MODBUS_DIR=H:/SDKS/vcpkg/installed',
               '-D', 'PUGIXML_DIR=H:/SDKS/vcpkg/installed'
             );
