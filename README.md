@@ -1,21 +1,35 @@
 #  Jade Tools C++ 工具合集 
 ## 更新时间 
-2026-04-02 13:30:10 
+2026-05-06 09:57:00 
 # 更新日志
 
-## v2.4.5
-* JImage 添加 clone方法, 用于深拷贝图像数据
-* 使用线程池, 用于处理视频录制线程, 避免创建多个线程,导致资源浪费
-* 视频录制统一使用mp4文件格式, 采用h264编码,包括Ascend上也是使用h264编码
-* WSDLBuilder soap xml 与 Python代码一致
-* Ascend上新增H264VideoWriter类, 用于视频录制, 支持h264编码
-* Crop裁剪图像支持手动控制旋转角度, 0,1,2 分别对应 0,90,180 度
-* 绘制图像是时不能在原图上绘制, 必须在克隆后的图像上绘制,不能修改原图数据
-* JFile添加获取文件夹下所有文件的方法, 支持递归获取
-* JadeImage全部使用智能指针管理, 避免内存泄漏
-* 修复编译错误
-* Logger在Info日志级别以上,只输出时间和信息,不在输出函数名和行号
-* 使用 random_device 生成一个真随机的种子, 用于随机数生成
-* 支持slim版本也支持OpenSSL
-* 对key和value进行分组，增加反编译的复杂度
+## v2.4.6
+
+* 修复rand无法在linux上编译的问题
+* Dockerfile 中CUDA11.8中严格按照计算能力编译
+* 加密狗控制器,传参支持HaspAdapterDevice类型
+* 新增字符串支持按照\n分隔, 用于解析配置文件中的多行字符串
+* 退出信号使用Info日志级别, 用于提示用户程序退出信号
+* 修改参数重连时间, 单位秒
+* 新增getSectionParameters方法, 用于获取section中所有参数, 统一返回string类型, 客户端需要根据string类型,手动转换为int或long或bool或string类型
+* 解决在32位系统上,图像无法clone的bug
+* 定义一个Mat 数据转换成BGR格式的方法
+* Json解析如果字符串为空,返回默认字符串
+* JStringProcessor添加判断IPV4地址的方法
+* 新增JFloatProcessor添加浮点数保留小数位数的方法
+* CrashHandle支持返回crash dump文件路径
+* 解决日志退出不正常的bug
+* 奔溃不在处理日志文件，只返回crash dump文件路径
+* JImage不能随便增加函数,不然需要重新编译Inference库,会导致虚表错误
+* 分离ConvertBGR函数,使用单独的类来进行管理
+* 修复Soap服务端,在Python端使用suds,不能被正常调用的问题,需要正确处理Host头,生成Wsdl Location地址
+* 奔溃单例新增测试奔溃的函数
+* 修复文件路径在Windows上,创建中文路径的问题
+* jade::j_sqlite3::getInteger 默认返回-1
+* Sqlite3Helper新增close方法, 用于关闭数据库连接
+* 修复Sqlite3中int64_t类型, 无法正确绑定的问题
+* Sqlite3数据使用强同步的方式
+* 修复创建日期路径的bug
+* 日志按照日期进行轮转
+
 ---
