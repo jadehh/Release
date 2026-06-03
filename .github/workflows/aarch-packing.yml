@@ -91,7 +91,7 @@ jobs:
                 -D SPDLOG_DIR=/usr/local/include/spdlog \
                 -D OPENCV_DIR=/usr/local/opencv  \
                 -D HASP_ADAPTER_DIR=/usr/local/include  \
-                -D ASCEND_DIR=/usr/local/Ascend/nnrt/6.0.0.alpha001/aarch64-linux \
+                -D ASCEND_DIR=/usr/local/Ascend/ascend-toolkit/latest \
                 -D MODBUS_DIR=/usr/include \
                 -D PUGIXML_DIR=/usr/include && \
                 make -j $(nproc) && make install  && rm -r ../build-jade-tools-cann6-aarch64"

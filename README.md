@@ -1,35 +1,21 @@
 #  Jade Tools C++ 工具合集 
 ## 更新时间 
-2026-05-06 09:57:00 
+2026-06-03 15:13:06 
 # 更新日志
 
-## v2.4.6
-
-* 修复rand无法在linux上编译的问题
-* Dockerfile 中CUDA11.8中严格按照计算能力编译
-* 加密狗控制器,传参支持HaspAdapterDevice类型
-* 新增字符串支持按照\n分隔, 用于解析配置文件中的多行字符串
-* 退出信号使用Info日志级别, 用于提示用户程序退出信号
-* 修改参数重连时间, 单位秒
-* 新增getSectionParameters方法, 用于获取section中所有参数, 统一返回string类型, 客户端需要根据string类型,手动转换为int或long或bool或string类型
-* 解决在32位系统上,图像无法clone的bug
-* 定义一个Mat 数据转换成BGR格式的方法
-* Json解析如果字符串为空,返回默认字符串
-* JStringProcessor添加判断IPV4地址的方法
-* 新增JFloatProcessor添加浮点数保留小数位数的方法
-* CrashHandle支持返回crash dump文件路径
-* 解决日志退出不正常的bug
-* 奔溃不在处理日志文件，只返回crash dump文件路径
-* JImage不能随便增加函数,不然需要重新编译Inference库,会导致虚表错误
-* 分离ConvertBGR函数,使用单独的类来进行管理
-* 修复Soap服务端,在Python端使用suds,不能被正常调用的问题,需要正确处理Host头,生成Wsdl Location地址
-* 奔溃单例新增测试奔溃的函数
-* 修复文件路径在Windows上,创建中文路径的问题
-* jade::j_sqlite3::getInteger 默认返回-1
-* Sqlite3Helper新增close方法, 用于关闭数据库连接
-* 修复Sqlite3中int64_t类型, 无法正确绑定的问题
-* Sqlite3数据使用强同步的方式
-* 修复创建日期路径的bug
-* 日志按照日期进行轮转
-
+## v2.4.7
+* 新增数据库定时清理功能,用于清理数据库的记录,使用线程清理,每天清理一次
+* 完成华为小站上h265硬编码功能,该视频文件是h265裸流,如需播放,需要重新编码才可以播放
+* 解决在Linux上,视频文件无法通过http打开的bug,是因为moov写在尾部导致的,新增convert_to_faststart方法, 用于将视频文件的moov写在头部
+* Config中Logger初始化使用日期轮转的初始化方法
+* 获取文件夹下的所有文件路径,方法优化
+* JCrypto 支持 sha256的文件加密和字符串加密
+* 录制视频图像等待超时最多为2s
+* 解决Rtsp Info 用户名解密失败的bug
+* 加密狗登录支持使用最大产品ID登录,读取加密狗中的所有产品ID
+* BaseConfig支持登录加密狗, 用于初始化加密狗监听模块, 监听加密狗中的所有产品ID
+* 主动退出需要先关闭加密狗监听模块
+* 支持版本字符串转成int类型
+* 为了解决Cuda10下相机FPS获取不到的问题,统一先试用CPU版本获取FPS
+* RtspInfo支持直接设置相机的FPS,不在用之前的帧间隔来设置,这样可以解决在不同相机FPS上的问题,根据设置的相机的FPS，自动调整帧间隔
 ---
