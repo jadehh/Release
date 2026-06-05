@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Inference CANN6  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/inference:1.0.0-cann6-devel-ubuntu18.04 bash -c "
+                      -w /app ghcr.io/jadehh/inference:1.0.2-cann6-devel-ubuntu20.04 bash -c "
                  mkdir -p build-inference-cann6-aarch64 && cd build-inference-cann6-aarch64 && \
                  cmake ..  \
                     -D CMAKE_BUILD_TYPE=Release \
@@ -44,7 +44,7 @@ jobs:
                     -D CLIPPER_DIR=/usr/local/ \
                     -D OPENCV_DIR=/usr/local/opencv \
                     -D USE_OPENCV_CUDA=OFF \
-                    -D NNRT_DIR=/usr/local/Ascend/ascend-toolkit/6.0.0.alpha001/aarch64-linux && \
+                    -D NNRT_DIR=/usr/local/Ascend/ascend-toolkit/latest/ && \
                 make -j $(nproc) && make install  && rm -r ../build-inference-cann6-aarch64"
           echo "Build Dynamic Library Inference CANN6  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
       - name: Tar Inference
