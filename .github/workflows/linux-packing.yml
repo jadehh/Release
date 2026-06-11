@@ -121,20 +121,20 @@ jobs:
       - name: Tar Jade Tools
         run: |
           # 压缩 slim 包
-          cd jade_tools-slim-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-slim-linux.tar.gz . && cd ..
-          cd jade_tools-slim-linux/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-slim-linux.tar.gz . && cd ..
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-slim-linux.tar.gz -C jade_tools-slim-linux .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-slim-linux.tar.gz -C jade_tools-slim-linux/lib .
           md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-slim-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-slim-linux.tar.gz.md5
           # 压缩 cpu 包
-          cd jade_tools-cpu-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz . && cd ..
-          cd jade_tools-cpu-linux/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-cpu-linux.tar.gz . && cd ..
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-cpu-linux.tar.gz -C jade_tools-cpu-linux .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-linux.tar.gz -C jade_tools-cpu-linux/lib .
           md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-linux.tar.gz.md5
           # 压缩 cuda10 包
-          cd jade_tools-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz . && cd ..
-          cd jade_tools-cuda10-linux/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz . && cd ..
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz -C jade_tools-cuda10-linux .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz -C jade_tools-cuda10-linux/lib .
           md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz.md5
           # 压缩 cuda11 包
-          cd jade_tools-cuda11-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz . && cd ..
-          cd jade_tools-cuda11-linux/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz . && cd ..
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz -C jade_tools-cuda11-linux .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz -C jade_tools-cuda11-linux/lib .
           md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz.md5
 
       - name: Generate Linux Download Information
