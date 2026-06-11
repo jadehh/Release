@@ -115,60 +115,46 @@ jobs:
 
       - name: Zip File
         run: |
-          # 打包 Windows 版本
+          # 压缩 slim 包
           7z a ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip jade_tools-slim-windows/
-          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip > ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip.md5
+          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip jade_tools-slim-windows/lib/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip > ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip.md5
+          # 压缩 cpu 包
           7z a ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip jade_tools-cpu-windows/
-          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip.md5
+          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip jade_tools-cpu-windows/lib/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip > ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip.md5
+          # 压缩 cuda 包
           7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip jade_tools-cuda12-windows/
-          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip > ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip.md5
-
-      - name: Manage Release Notes
-        uses: ./.github/actions/release-notes-management
-        with:
-          tag_name: ${{ steps.get_version.outputs.tag_name }}
-          token: ${{ secrets.GH_PAT }}
-          path: ./
+          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip jade_tools-cuda12-windows/lib/
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip.md5
 
       - name: Generate Windows Download Information
         run: |
-          # 检查文件是否存在（PowerShell语法）
-          if (-not (Test-Path "RELEASE_NOTES.md")) {
-            # 如果文件不存在，运行 cmake 命令生成
-            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
-          }
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
           
-          # 确保文件存在
-          if (-not (Test-Path "RELEASE_NOTES.md")) {
-            New-Item -Path "RELEASE_NOTES.md" -ItemType File
+          # jade tools slim runtime 信息
+          $file_slim = "${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip"
+          $md5_slim = Get-Content "$file_slim.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $download_url_slim = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_slim"
+          # jade tools cpu runtime 信息
+          $file_cpu = "${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip"
+          $md5_cpu = Get-Content "$file_cpu.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $download_url_cpu = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cpu"
+          # jade tools cuda runtime 信息
+          $file_cuda_12 = "${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip"
+          $md5_cuda_12 = Get-Content "$file_cuda_12.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $download_url_cuda_12 = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cuda_12"
+          $json = @{
+            platform = "windows"
+            tag_name = "${{ steps.get_version.outputs.tag_name }}"
+            packages = @(
+              @{name="slim"; file = $file_slim; md5 = $md5_slim; download_url = $download_url_slim },
+              @{name="cpu"; file = $file_cpu; md5 = $md5_cpu; download_url = $download_url_cpu },
+              @{name="cuda12"; file = $file_cuda_12; md5 = $md5_cuda_12; download_url = $download_url_cuda_12 }
+            )
           }
+          $json | ConvertTo-Json -Depth 3 | Out-File -FilePath windows.json -Encoding utf8
           
-          # 添加 Windows 下载信息（PowerShell语法）
-          Add-Content -Path "RELEASE_NOTES.md" -Value ""
-          Add-Content -Path "RELEASE_NOTES.md" -Value "`n## Windows 下载信息"
-          Add-Content -Path "RELEASE_NOTES.md" -Value "| 文件名 | MD5校验值 | 下载链接 |"
-          Add-Content -Path "RELEASE_NOTES.md" -Value "|--------|----------|----------|"
-        
-          
-          # Windows 包信息（PowerShell语法）
-          $jade_tools_slim_file = "${{ steps.get_version.outputs.tag_name }}-slim-windows.zip"
-          if (Test-Path $jade_tools_slim_file) {
-            $md5 = Get-Content "$jade_tools_slim_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
-            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_slim_file"
-            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_slim_file | ``$md5`` | [下载]($download_url) |"
-          }
-          $jade_tools_cpu_file = "${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip"
-          if (Test-Path $jade_tools_cpu_file) {
-            $md5 = Get-Content "$jade_tools_cpu_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
-            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_cpu_file"
-            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_cpu_file | ``$md5`` | [下载]($download_url) |"
-          }
-          $jade_tools_cuda_12_file = "${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip"
-          if (Test-Path $jade_tools_cuda_12_file) {
-            $md5 = Get-Content "$jade_tools_cuda_12_file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
-            $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$jade_tools_cuda_12_file"
-            Add-Content -Path "RELEASE_NOTES.md" -Value "| $jade_tools_cuda_12_file | ``$md5`` | [下载]($download_url) |"
-          }
 
       - name: Upload Windows Release Assets
         uses: softprops/action-gh-release@v1
@@ -181,5 +167,9 @@ jobs:
             ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip
             ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip
             ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip
+            windows.json
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

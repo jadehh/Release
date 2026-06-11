@@ -101,49 +101,62 @@ jobs:
       - name: Tar Jade Tools
         run: |
           # 压缩 slim 包
-          cd jade_tools-slim-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz.md5
+          cd jade_tools-slim-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz . && cd ..
+          cd jade_tools-slim-aarch64/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-slim-aarch64.tar.gz . && cd ..
+          md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-slim-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-slim-aarch64.tar.gz.md5
           # 压缩 cpu 包
-          cd jade_tools-cpu-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz.md5
+          cd jade_tools-cpu-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz . && cd ..
+          cd jade_tools-cpu-aarch64/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-cpu-aarch64.tar.gz . && cd ..
+          md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-aarch64.tar.gz.md5
           # 压缩 cann6 包
-          cd jade_tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz.md5
-
-      - name: Manage Release Notes
-        uses: ./.github/actions/release-notes-management
-        with:
-          tag_name: ${{ steps.get_version.outputs.tag_name }}
-          token: ${{ secrets.GH_PAT }}
-          path: ./
+          cd jade_tools-cann6-aarch64 && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz . && cd ..
+          cd jade_tools-cann6-aarch64/lib && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz . && cd ..
+          md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz.md5
+     
 
       - name: Generate Linux Download Information
         run: |
-          # 如果不存在使用则新建
-          if [ ! -f "RELEASE_NOTES.md" ]; then
-            # 如果文件不存在，运行 cmake 命令生成
-            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
-          fi
-
-          echo  "" >> RELEASE_NOTES.md 
-          echo  "## AARCH64 下载信息" >> RELEASE_NOTES.md 
-          echo "| 文件名 | MD5校验值 | 下载链接 |" >> RELEASE_NOTES.md 
-          echo "|--------|----------|----------|" >> RELEASE_NOTES.md 
-          # jade tools slim 主包信息
-          file_slim="${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz"
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
+          # jade tools slim runtime 信息
+          file_slim="${{ steps.get_version.outputs.tag_name }}-runtime-slim-aarch64.tar.gz"
           md5_slim=$(cat "${file_slim}.md5" | awk '{print $1}')
           download_url_slim="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_slim"
-          echo "| $file_slim | \`$md5_slim\` | [下载]($download_url_slim) |" >> RELEASE_NOTES.md 
-          # jade tools cpu 主包信息
-          file_cpu="${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz"
+          # jade tools cpu runtime 信息
+          file_cpu="${{ steps.get_version.outputs.tag_name }}-runtime-cpu-aarch64.tar.gz"
           md5_cpu=$(cat "${file_cpu}.md5" | awk '{print $1}')
           download_url_cpu="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cpu"
-          echo "| $file_cpu | \`$md5_cpu\` | [下载]($download_url_cpu) |" >> RELEASE_NOTES.md 
-          # jade tools cann6 主包信息
-          file_cann6="${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz"
+          # jade tools cann6 runtime 信息
+          file_cann6="${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz"
           md5_cann6=$(cat "${file_cann6}.md5" | awk '{print $1}')
           download_url_cann6="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cann6"
-          echo "| $file_cann6 | \`$md5_cann6\` | [下载]($download_url_cann6) |" >> RELEASE_NOTES.md 
+          # 生成 JSON 格式的下载信息
+          cat > aarch64.json << JSONEOF
+          {
+          "platform": "aarch64",
+          "tag_name": "${{ steps.get_version.outputs.tag_name }}",
+          "packages": [
+            {
+              "name": "slim",
+              "file": "${file_slim}",
+              "md5": "${md5_slim}",
+              "download_url": "${download_url_slim}"
+            },
+            {
+              "name": "cpu",
+              "file": "${file_cpu}",
+              "md5": "${md5_cpu}",
+              "download_url": "${download_url_cpu}"
+            },
+            {
+              "name": "cann6",
+              "file": "${file_cann6}",
+              "md5": "${md5_cann6}",
+              "download_url": "${download_url_cann6}"
+            }
+          ]
+          }
+          JSONEOF
+
 
       - name: Upload AARCH64 Release Assets
         uses: softprops/action-gh-release@v1
@@ -156,5 +169,9 @@ jobs:
             ${{ steps.get_version.outputs.tag_name }}-slim-aarch64.tar.gz
             ${{ steps.get_version.outputs.tag_name }}-cpu-aarch64.tar.gz
             ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-runtime-slim-aarch64.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-aarch64.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz
+            aarch64.json
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
