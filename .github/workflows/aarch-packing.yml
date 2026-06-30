@@ -59,6 +59,8 @@ jobs:
 
       - name: Generate Linux Download Information
         run: |
+          # 如果不存在使用则新建
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
           # inference cann6 runtime 信息
           file_cann6="${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz"
           md5_cann6=$(cat "${file_cann6}.md5" | awk '{print $1}')
