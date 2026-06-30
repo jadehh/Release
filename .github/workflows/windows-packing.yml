@@ -53,9 +53,9 @@ jobs:
       - name: Zip File
         run: |
           # 打包 Windows 版本
-              # 压缩 cuda 包
+          # 压缩 cuda 包
           7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip inference-cuda12-windows/
-          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip inference-cuda12-windows/x64-windows/bin/
+          cd inference-cuda12-windows/x64-windows/bin/ ; 7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip * ; mv ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip ../../../; cd ../../../
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip MD5 > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip.md5
 
       - name: Generate Windows Download Information
