@@ -53,7 +53,7 @@ jobs:
         run: |
           # 压缩 cann6 包
           tar -czvf ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz -C inference-cann6-aarch64 .
-          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz -C jinference-cann6-aarch64/lib .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz -C inference-cann6-aarch64/lib .
           md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz.md5
           
 
