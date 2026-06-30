@@ -67,40 +67,48 @@ jobs:
 
       - name: Tar Inference
         run: |
-          cd inference-cuda10-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz.md5
-          cd inference-cuda11-linux && tar -czvf ../${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz .
-          cd ../ &&  md5sum ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz.md5
-
-      - name: Manage Release Notes
-        uses: ./.github/actions/release-notes-management
-        with:
-          tag_name: ${{ steps.get_version.outputs.tag_name }}
-          token: ${{ secrets.GH_PAT }}
-          path: ./
+          # 压缩 cuda10 包
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz  -C inference-cuda10-linux .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz -C inference-cuda10-linux/lib .
+          md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz.md5
+          # 压缩 cuda11 包
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz -C inference-cuda11-linux .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz -C inference-cuda11-linux/lib .
+          md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz.md5
 
       - name: Generate Linux Download Information
         run: |
           # 如果不存在使用则新建
-          if [ ! -f "RELEASE_NOTES.md" ]; then
-            # 如果文件不存在，运行 cmake 命令生成
-            cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
-          fi
-
-          echo  "" >> RELEASE_NOTES.md 
-          echo  "## Linux 下载信息" >> RELEASE_NOTES.md 
-          echo "| 文件名 | MD5校验值 | 下载链接 |" >> RELEASE_NOTES.md 
-          echo "|--------|----------|----------|" >> RELEASE_NOTES.md 
-          # inference cuda10 主包信息
-          file_cuda10="${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz"
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
+          # inference cuda10 runtime 信息
+          file_cuda10="${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz"
           md5_cuda10=$(cat "${file_cuda10}.md5" | awk '{print $1}')
           download_url_cuda10="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cuda10"
-          echo "| $file_cuda10 | \`$md5_cuda10\` | [下载]($download_url_cuda10) |" >> RELEASE_NOTES.md 
-          # inference cuda11 主包信息
-          file_cuda11="${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz"
+          # inference cuda11 runtime 信息
+          file_cuda11="${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz"
           md5_cuda11=$(cat "${file_cuda11}.md5" | awk '{print $1}')
           download_url_cuda11="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cuda11"
-          echo "| $file_cuda11 | \`$md5_cuda11\` | [下载]($download_url_cuda11) |" >> RELEASE_NOTES.md 
+          # 生成 JSON 格式的下载信息
+          cat > linux.json << JSONEOF
+          {
+          "platform": "linux",
+          "tag_name": "${{ steps.get_version.outputs.tag_name }}",
+          "packages": [
+            {
+              "name": "cuda10",
+              "file": "${file_cuda10}",
+              "md5": "${md5_cuda10}",
+              "download_url": "${download_url_cuda10}"
+            },
+            {
+              "name": "cuda11",
+              "file": "${file_cuda11}",
+              "md5": "${md5_cuda11}",
+              "download_url": "${download_url_cuda11}"
+            }
+          ]
+          }
+          JSONEOF
           
 
       - name: Upload Linux Release Assets
@@ -112,6 +120,9 @@ jobs:
           body_path: "RELEASE_NOTES.md"
           files: |
             ${{ steps.get_version.outputs.tag_name }}-cuda10-linux.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cuda10-linux.tar.gz
             ${{ steps.get_version.outputs.tag_name }}-cuda11-linux.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cuda11-linux.tar.gz
+            linux.json
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
