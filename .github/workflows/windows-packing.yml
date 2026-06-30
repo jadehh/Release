@@ -117,15 +117,15 @@ jobs:
         run: |
           # 压缩 slim 包
           7z a ${{ steps.get_version.outputs.tag_name }}-slim-windows.zip jade_tools-slim-windows/
-          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip jade_tools-slim-windows/x86-windows/bin/
+          cd jade_tools-slim-windows/x86-windows/bin/ ; 7z a ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip * ; mv ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip ../../../; cd ../../../
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip MD5 > ${{ steps.get_version.outputs.tag_name }}-runtime-slim-windows.zip.md5
           # 压缩 cpu 包
           7z a ${{ steps.get_version.outputs.tag_name }}-cpu-windows.zip jade_tools-cpu-windows/
-          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip jade_tools-cpu-windows/x64-windows/bin/
+          cd jade_tools-cpu-windows/x64-windows/bin/ ; 7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip * ; mv ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip ../../../; cd ../../../
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip MD5 > ${{ steps.get_version.outputs.tag_name }}-runtime-cpu-windows.zip.md5
           # 压缩 cuda 包
           7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip jade_tools-cuda12-windows/
-          7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip jade_tools-cuda12-windows/x64-windows/bin/
+          cd jade_tools-cuda12-windows/x64-windows/bin/ ; 7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip * ; mv ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip ../../../; cd ../../../
           certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip MD5 > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip.md5
 
       - name: Generate Windows Download Information
