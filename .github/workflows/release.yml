@@ -3,7 +3,7 @@ name: Release Pipeline
 on:
   push:
     tags:
-      - 'inference-v*'
+      - 'ContainerOCRService-v*'
 
 
 
