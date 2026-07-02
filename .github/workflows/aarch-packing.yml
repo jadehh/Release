@@ -32,16 +32,17 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Build Dynamic Library ContainerOCRService for AARCH64
+      - name: Build ContainerOCRService for AARCH64
         run: |
-          echo "Build Dynamic Library ContainerOCRService for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
-          docker run  --rm  --platform linux/arm64  --name build -v ${PWD}:/app  -w /app ghcr.io/jadehh/container_ocr_service:1.0.0-ubuntu18.04 bash -c "
+          echo "Build ContainerOCRService for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm  --name build -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  -w /app \
+          ghcr.io/jadehh/container_ocr_service:1.0.0-ubuntu18.04 bash -c "
           mkdir -p build && cd build && \
           cmake ..  \
           -D CMAKE_BUILD_TYPE=Release \
           -D PUGIXML_DIR=/usr/include
           make -j $(nproc) container-ocr-service-aarch64  && rm -r ../build"
-          echo "Build Dynamic Library ContainerOCRService for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "Build ContainerOCRService for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
       - name: Generate Linux Download Information
         run: |

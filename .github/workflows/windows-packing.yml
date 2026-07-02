@@ -27,12 +27,12 @@ jobs:
           echo "repo_name=$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           echo "lib_name=lib$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Build Dynamic Library ContainerOCRService for Windows With Docker
+      - name: Build ContainerOCRService for Windows With Docker
         shell: pwsh
         run: |
-          echo "Build Dynamic Library ContainerOCRService for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "Build ContainerOCRService for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
           docker run --rm --name build -v ${PWD}:C:\app -w C:\app ghcr.io/jadehh/container_ocr_service:1.0.0-windows2022 cmd /c C:\app\templates\build.bat      
-          echo "Build Dynamic Library ContainerOCRService for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "Build ContainerOCRService for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
       - name: Generate Windows Download Information
         run: |
