@@ -1,0 +1,83 @@
+name: AARCH64 Packing
+
+on: workflow_call
+
+
+jobs:
+  linux-packing:
+    name: AARCH64 Packing
+    runs-on: ubuntu-latest
+    env:
+      TZ: 'Asia/Shanghai'   # 为所有步骤设置时区
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/ContainerOCRService
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          tag=${GITHUB_REF#refs/tags/}
+          echo "tag_name=${tag}" >> $GITHUB_OUTPUT
+          # 提取仓库名称（去掉 -v 及后面的版本号）
+          repo_name=$(echo "${tag}" | sed 's/-v[0-9].*//')
+          echo "repo_name=${repo_name}" >> $GITHUB_OUTPUT
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build Dynamic Library ContainerOCRService for AARCH64
+        run: |
+          echo "Build Dynamic Library ContainerOCRService for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm  --platform linux/arm64  --name build -v ${PWD}:/app  -w /app jadehh/container_ocr_service:1.0.0-ubuntu18.04 bash -c "
+          mkdir -p build && cd build && \
+          cmake ..  \
+          -D CMAKE_BUILD_TYPE=Release \
+          -D PUGIXML_DIR=/usr/include
+          make -j `$(nproc) container-ocr-service-aarch64  && rm -r ../build"
+          echo "Build Dynamic Library ContainerOCRService for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+
+      - name: Generate Linux Download Information
+        run: |
+          # 如果不存在使用则新建
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
+          # container-ocr-service-aarch64 信息
+          cp container-ocr-service/Release/container-ocr-service-aarch64 ./
+          file="container-ocr-service-aarch64"
+          md5=$(cat "${file}.md5" | awk '{print $1}')
+          download_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
+          # 生成 JSON 格式的下载信息
+          cat > aarch64.json << JSONEOF
+          {
+          "platform": "aarch64",
+          "tag_name": "${{ steps.get_version.outputs.tag_name }}",
+          "packages": [
+            {
+              "name": "container-ocr-service-aarch64",
+              "file": "${file}",
+              "md5": "${md5}",
+              "download_url": "${download_url}"
+            }
+          ]
+          }
+          JSONEOF
+
+
+      - name: Upload AARCH64 Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            container-ocr-service-aarch64
+            aarch64.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
