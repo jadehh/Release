@@ -42,6 +42,7 @@ jobs:
           cp output/Release/container-ocr-service.exe ./
           # container-ocr-service 信息
           $file= "container-ocr-service.exe"
+          certutil -hashfile $file MD5 > $file.md5
           $md5 = Get-Content "$file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
           $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
           $json = @{

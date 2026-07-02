@@ -40,7 +40,7 @@ jobs:
           cmake ..  \
           -D CMAKE_BUILD_TYPE=Release \
           -D PUGIXML_DIR=/usr/include
-          make -j `$(nproc) container-ocr-service-aarch64  && rm -r ../build"
+          make -j $(nproc) container-ocr-service-aarch64  && rm -r ../build"
           echo "Build Dynamic Library ContainerOCRService for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
       - name: Generate Linux Download Information
@@ -50,7 +50,8 @@ jobs:
           # container-ocr-service-aarch64 信息
           cp output/Release/container-ocr-service-aarch64 ./
           file="container-ocr-service-aarch64"
-          md5=$(cat "${file}.md5" | awk '{print $1}')
+          md5sum "$file" > "$file".md5
+          md5=$(cat "${file".md5 | awk '{print $1}')
           download_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
           # 生成 JSON 格式的下载信息
           cat > aarch64.json << JSONEOF
