@@ -38,9 +38,9 @@ jobs:
         run: |
           cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
           $file_name = "container-ocr-service"
-          cp output/Release/$file_name.exe ./
+          cp output/Release/"$file_name.exe" ./
           # container-ocr-service 信息
-          $file= $file_name.exe
+          $file= "$file_name.exe"
           certutil -hashfile $file MD5 > file.md5
           $md5 = Get-Content "file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
           $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
