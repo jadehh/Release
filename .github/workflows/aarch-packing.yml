@@ -51,7 +51,7 @@ jobs:
           cp output/Release/container-ocr-service-aarch64 ./
           file="container-ocr-service-aarch64"
           md5sum "$file" > "$file".md5
-          md5=$(cat "${file".md5 | awk '{print $1}')
+          md5=$(cat "${file}".md5 | awk '{print $1}')
           download_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
           # 生成 JSON 格式的下载信息
           cat > aarch64.json << JSONEOF
