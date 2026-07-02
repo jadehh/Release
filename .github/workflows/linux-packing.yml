@@ -37,7 +37,7 @@ jobs:
           mkdir -p build && cd build && \ 
           cmake ..  \
           -D CMAKE_BUILD_TYPE=Release \
-          -D PUGIXML_DIR=/usr/include
+          -D PUGIXML_DIR=/usr/include && \
           make -j $(nproc) container-ocr-service  && rm -r ../build"
           echo "Build  Container OCR Service for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
