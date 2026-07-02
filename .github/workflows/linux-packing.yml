@@ -34,7 +34,7 @@ jobs:
           echo "Build Container OCR Service for Linux 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm  --name build -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  -w /app \
           ghcr.io/jadehh/container_ocr_service:1.0.0-ubuntu18.04 bash -c "
-          mkdir -p build && cd build && \ 
+          mkdir -p build && cd build && \
           cmake ..  \
           -D CMAKE_BUILD_TYPE=Release \
           -D PUGIXML_DIR=/usr/include && \
