@@ -47,7 +47,7 @@ jobs:
             platform = "windows"
             tag_name = "${{ steps.get_version.outputs.tag_name }}"
             packages = @(
-              @{name="container-ocr-service"; file = $file; md5 = $md5; download_url = $download_url },
+              @{name="container-ocr-service"; file = $file; md5 = $md5; download_url = $download_url }
             )
           }
           $json | ConvertTo-Json -Depth 3 | Out-File -FilePath windows.json -Encoding utf8
