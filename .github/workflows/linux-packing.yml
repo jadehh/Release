@@ -47,12 +47,12 @@ jobs:
           # 如果不存在使用则新建
           cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
           # 生成增量更新包
-          file_incremental_updates=${{ steps.get_version.outputs.tag_name }}-update-linux-amd64.tar.gz"
+          file_incremental_updates=${{ steps.get_version.outputs.tag_name }}-update-linux-amd64.tar.gz
           md5sum "$file_incremental_updates" > "$file_incremental_updates".md5
           md5_incremental_updates=$(cat "${file_incremental_updates}".md5 | awk '{print $1}')
           download_incremental_updates_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_incremental_updates"
           # 生成完整更新包
-          file_full_update=${{ steps.get_version.outputs.tag_name }}-linux-amd64.deb"
+          file_full_update=${{ steps.get_version.outputs.tag_name }}-linux-amd64.deb
           md5sum "$file_full_update" > "$file_full_update".md5
           md5_full_update=$(cat "${file_full_update}".md5 | awk '{print $1}')
           download_full_update_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_full_update"
