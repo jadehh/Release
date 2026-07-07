@@ -38,7 +38,7 @@ jobs:
           cmake .. \
           -D CMAKE_BUILD_TYPE=Release \
           -D Qt5_DIR=/opt/Qt5.15.18/lib/cmake/Qt5 && \
-          make -j `$(nproc) AlgoStudio && \
+          make -j $(nproc) AlgoStudio && \
           cd .. && bash package/packing.sh && rm -rf ./AppDir && rm -rf ./build"    
           echo "Build AlgoStudio for Linux 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
