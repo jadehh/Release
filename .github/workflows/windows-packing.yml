@@ -1,0 +1,95 @@
+name: Windows Packing
+
+on: workflow_call
+
+jobs:
+  windows-packing:
+    name: Windows Packing
+    runs-on: windows-latest
+    env:
+      TZ: 'Asia/Shanghai'
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/AlgoStudio
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          $tag = $env:GITHUB_REF -replace 'refs/tags/',''
+          echo "tag_name=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $repo_name = $tag -replace '-v\d+.*',''
+          echo "repo_name=$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "lib_name=lib$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build AlgoStudio for Windows With Docker
+        shell: pwsh
+        run: |
+          echo "Build AlgoStudio for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build -v ${PWD}:C:\app -w C:\app ghcr.io/jadehh/algo_studio:1.0.0-build-windows2022  cmd /c C:\app\templates\build\windows\build.bat      
+          echo "Build AlgoStudio for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+      - name: Inno Setup Update Package
+        if: startsWith(github.event.ref, 'refs/tags/')
+        uses: jadehh/inno-setup-action@v1.0.0
+        with:
+          filepath: ./package/InstallerScript.iss
+
+      - name: Deploy Package With Docker
+        shell: pwsh
+        run: |
+          cp ./package/installer.exe ./${{ steps.get_version.outputs.tag_name }}-update-windows.exe
+          echo "Build AlgoStudio for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build -v ${PWD}:C:\app -w C:\app ghcr.io/jadehh/algo_studio:1.0.0-build-windows2022  cmd /c C:\app\templates\windows\deploy.bat      
+          echo "Build AlgoStudio for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+      - name: Inno Setup Full Package
+        if: startsWith(github.event.ref, 'refs/tags/')
+        uses: jadehh/inno-setup-action@v1.0.0
+        with:
+          filepath: ./package/InstallerScript.iss
+
+      - name: Generate Windows Download Information
+        run: |
+          cp ./package/installer.exe ./${{ steps.get_version.outputs.tag_name }}-windows.exe
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
+          # 增量包
+          $file_incremental_updates = ${{ steps.get_version.outputs.tag_name }}-update-windows.exe
+          certutil -hashfile $file_incremental_updates MD5 > file.md5
+          $md5_incremental_updates = Get-Content "file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $download_url_incremental_updates = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_incremental_updates"
+          # 完整包
+          $file_full= ${{ steps.get_version.outputs.tag_name }}-windows.exe
+          certutil -hashfile $file_full MD5 > file.md5
+          $md5_full = Get-Content "file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $download_url_full = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_full"
+          
+          $json = @{
+            platform = "windows"
+            tag_name = "${{ steps.get_version.outputs.tag_name }}"
+            packages = @(
+              @{name="incrementalUpdates"; file = $file_incremental_updates; md5 = $md5_incremental_updates; download_url = $download_url_incremental_updates },
+              @{name="fullUpdate"; file = $file_full; md5 = $md5_full; download_url = $download_url_full }
+            )
+          }
+          $json | ConvertTo-Json -Depth 3 | Out-File -FilePath windows.json -Encoding utf8
+
+
+      - name: Upload Windows Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            ${{ steps.get_version.outputs.tag_name }}-update-windows.exe
+            ${{ steps.get_version.outputs.tag_name }}-windows.exe
+            windows.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}

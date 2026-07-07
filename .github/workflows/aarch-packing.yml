@@ -1,0 +1,98 @@
+name: AARCH64 Packing
+
+on: workflow_call
+
+
+jobs:
+  linux-packing:
+    name: AARCH64 Packing
+    runs-on: ubuntu-latest
+    env:
+      TZ: 'Asia/Shanghai'   # 为所有步骤设置时区
+
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          repository: jadehh/AlgoStudio
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
+          fetch-tags: true         # 显式告诉 Action 去获取所有标签
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: |
+          tag=${GITHUB_REF#refs/tags/}
+          echo "tag_name=${tag}" >> $GITHUB_OUTPUT
+          # 提取仓库名称（去掉 -v 及后面的版本号）
+          repo_name=$(echo "${tag}" | sed 's/-v[0-9].*//')
+          echo "repo_name=${repo_name}" >> $GITHUB_OUTPUT
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build AlgoStudio for ARM64
+        run: |
+          echo "Build AlgoStudio for ARM64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run --platform linux/arm64 --rm  --name build -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  -w /app \
+          ghcr.io/jadehh/algo_studio:1.0.0-build-ubuntu18.04 bash -c "
+          mkdir -p  build && cd build &&
+          cmake .. \
+          -D CMAKE_BUILD_TYPE=Release \
+          -D Qt5_DIR=/opt/Qt5.15.18/lib/cmake/Qt5 && \
+          make -j `$(nproc) AlgoStudio && \
+          cd .. && bash package/packing.sh && rm -rf ./AppDir && rm -rf ./build"    
+          echo "Build AlgoStudio for ARM64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+
+      - name: Generate ARM64 Download Information
+        run: |
+          # 如果不存在使用则新建
+          cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
+          # 生成增量更新包
+          file_incremental_updates=${{ steps.get_version.outputs.tag_name }}-update-linux-arm64.tar.gz"
+          md5sum "$file_incremental_updates" > "$file_incremental_updates".md5
+          md5_incremental_updates=$(cat "${file_incremental_updates}".md5 | awk '{print $1}')
+          download_incremental_updates_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_incremental_updates"
+          # 生成完整更新包
+          file_full_update=${{ steps.get_version.outputs.tag_name }}-linux-arm64.deb"
+          md5sum "$file_full_update" > "$file_full_update".md5
+          md5_full_update=$(cat "${file_full_update}".md5 | awk '{print $1}')
+          download_full_update_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_full_update"
+          
+          # 生成 JSON 格式的下载信息
+          cat > arm64.json << JSONEOF
+          {
+          "platform": "arm64",
+          "tag_name": "${{ steps.get_version.outputs.tag_name }}",
+          "packages": [
+            {
+              "name": "incrementalUpdates",
+              "file": "${file_incremental_updates}",
+              "md5": "${md5_incremental_updates}",
+              "download_url": "${download_incremental_updates_url}"
+            },
+            {
+              "name": "fullUpdate",
+              "file": "${file_full_update}",
+              "md5": "${md5_full_update}",
+              "download_url": "${download_full_update_url}"
+            }
+          ]
+          }
+          JSONEOF
+
+
+      - name: Upload Linux Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "${{ steps.get_version.outputs.tag_name }}"
+          body_path: "RELEASE_NOTES.md"
+          files: |
+            ${{ steps.get_version.outputs.tag_name }}-update-linux-arm64.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-linux-arm64.deb
+            arm64.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
