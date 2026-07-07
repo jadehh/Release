@@ -44,9 +44,9 @@ jobs:
         shell: pwsh
         run: |
           cp ./package/installer.exe ./${{ steps.get_version.outputs.tag_name }}-update-windows.exe
-          echo "Build AlgoStudio for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-          docker run --rm --name build -v ${PWD}:C:\app -w C:\app ghcr.io/jadehh/algo_studio:1.0.0-build-windows2022  cmd /c C:\app\templates\windows\deploy.bat      
-          echo "Build AlgoStudio for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "Deploy AlgoStudio for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build -v ${PWD}:C:\app -w C:\app ghcr.io/jadehh/algo_studio:1.0.0-build-windows2022  cmd /c C:\app\templates\build\windows\deploy.bat     
+          echo "Deploy AlgoStudio for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
       - name: Inno Setup Full Package
         if: startsWith(github.event.ref, 'refs/tags/')
