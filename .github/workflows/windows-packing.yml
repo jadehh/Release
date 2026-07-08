@@ -65,7 +65,7 @@ jobs:
           $md5_incremental_updates = Get-Content "file_incremental.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
           $download_url_incremental_updates = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_incremental_updates"
           # 完整包
-          file_full_name = "${{ steps.get_version.outputs.tag_name }}-windows"
+          $file_full_name = "${{ steps.get_version.outputs.tag_name }}-windows"
           $file_full = "$file_full_name.exe"
           certutil -hashfile $file_full MD5 > file_full.md5
           $md5_full = Get-Content "file_full.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
