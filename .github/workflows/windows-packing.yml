@@ -59,14 +59,16 @@ jobs:
           cp ./package/installer.exe ./${{ steps.get_version.outputs.tag_name }}-windows.exe
           cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P .cmake/extractChangelog.cmake
           # 增量包
-          $file_incremental_updates = ${{ steps.get_version.outputs.tag_name }}-update-windows.exe
-          certutil -hashfile $file_incremental_updates MD5 > file.md5
-          $md5_incremental_updates = Get-Content "file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $file_incremental_name = "${{ steps.get_version.outputs.tag_name }}-update-windows"
+          $file_incremental_updates = "$file_incremental_name.exe"
+          certutil -hashfile $file_incremental_updates MD5 > file_incremental.md5
+          $md5_incremental_updates = Get-Content "file_incremental.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
           $download_url_incremental_updates = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_incremental_updates"
           # 完整包
-          $file_full= ${{ steps.get_version.outputs.tag_name }}-windows.exe
-          certutil -hashfile $file_full MD5 > file.md5
-          $md5_full = Get-Content "file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          file_full_name = "${{ steps.get_version.outputs.tag_name }}-windows"
+          $file_full = "$file_full_name.exe"
+          certutil -hashfile $file_full MD5 > file_full.md5
+          $md5_full = Get-Content "file_full.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
           $download_url_full = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_full"
           
           $json = @{
