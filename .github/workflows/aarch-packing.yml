@@ -78,7 +78,7 @@ jobs:
         run: |
           echo "Build Dynamic Library Jade Tools CANN6  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
           docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
-                      -w /app ghcr.io/jadehh/jade_tools:1.0.2-cann6-ubuntu20.04 bash -c "
+                      -w /app ghcr.io/jadehh/jade_tools:1.0.3-cann6-ubuntu20.04 bash -c "
                 mkdir -p build-jade-tools-cann6-aarch64 && cd build-jade-tools-cann6-aarch64 && \
                 cmake ..  \
                 -D CMAKE_BUILD_TYPE=Release \
