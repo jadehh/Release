@@ -14,7 +14,7 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@v3
         with:
-          repository: jadehh/ContainerOCRService
+          repository: jadehh/inference
           ref: main
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
@@ -32,26 +32,39 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Build Dynamic Library ContainerOCRService for AARCH64
+      - name: Build Dynamic Library Inference CANN6  for AARCH64
         run: |
-          echo "Build Dynamic Library ContainerOCRService for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
-          docker run  --rm  --platform linux/arm64  --name build -v ${PWD}:/app  -w /app jadehh/container_ocr_service:1.0.0-ubuntu18.04 bash -c "
-          mkdir -p build && cd build && \
-          cmake ..  \
-          -D CMAKE_BUILD_TYPE=Release \
-          -D PUGIXML_DIR=/usr/include
-          make -j `$(nproc) container-ocr-service-aarch64  && rm -r ../build"
-          echo "Build Dynamic Library ContainerOCRService for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "Build Dynamic Library Inference CANN6  for AARCH64 构建开始时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          docker run  --rm --platform linux/arm64  --name build_shared -u $(id -u):$(id -g) -v  ${{ github.workspace }}:/app  \
+                      -w /app ghcr.io/jadehh/inference:1.0.2-cann6-devel-ubuntu20.04 bash -c "
+                 mkdir -p build-inference-cann6-aarch64 && cd build-inference-cann6-aarch64 && \
+                 cmake ..  \
+                    -D CMAKE_BUILD_TYPE=Release \
+                    -D CMAKE_INSTALL_PREFIX=../inference-cann6-aarch64 \
+                    -D CLIPPER_DIR=/usr/local/ \
+                    -D OPENCV_DIR=/usr/local/opencv \
+                    -D USE_OPENCV_CUDA=OFF \
+                    -D NNRT_DIR=/usr/local/Ascend/ascend-toolkit/latest/ && \
+                make -j $(nproc) && make install  && rm -r ../build-inference-cann6-aarch64"
+          echo "Build Dynamic Library Inference CANN6  for AARCH64 构建结束时间: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          
+
+      - name: Tar Inference
+        run: |
+          # 压缩 cann6 包
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz -C inference-cann6-aarch64 .
+          tar -czvf ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz -C inference-cann6-aarch64/lib .
+          md5sum ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz > ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz.md5
+          
 
       - name: Generate Linux Download Information
         run: |
           # 如果不存在使用则新建
           cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
-          # container-ocr-service-aarch64 信息
-          cp container-ocr-service/Release/container-ocr-service-aarch64 ./
-          file="container-ocr-service-aarch64"
-          md5=$(cat "${file}.md5" | awk '{print $1}')
-          download_url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
+          # inference cann6 runtime 信息
+          file_cann6="${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz"
+          md5_cann6=$(cat "${file_cann6}.md5" | awk '{print $1}')
+          download_url_cann6="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cann6"
           # 生成 JSON 格式的下载信息
           cat > aarch64.json << JSONEOF
           {
@@ -59,10 +72,10 @@ jobs:
           "tag_name": "${{ steps.get_version.outputs.tag_name }}",
           "packages": [
             {
-              "name": "container-ocr-service-aarch64",
-              "file": "${file}",
-              "md5": "${md5}",
-              "download_url": "${download_url}"
+              "name": "cann6",
+              "file": "${file_cann6}",
+              "md5": "${md5_cann6}",
+              "download_url": "${download_url_cann6}"
             }
           ]
           }
@@ -77,7 +90,8 @@ jobs:
           name: "${{ steps.get_version.outputs.tag_name }}"
           body_path: "RELEASE_NOTES.md"
           files: |
-            container-ocr-service-aarch64
+            ${{ steps.get_version.outputs.tag_name }}-cann6-aarch64.tar.gz
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cann6-aarch64.tar.gz
             aarch64.json
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

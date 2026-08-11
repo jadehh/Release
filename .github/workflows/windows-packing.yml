@@ -12,7 +12,7 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@v3
         with:
-          repository: jadehh/ContainerOCRService
+          repository: jadehh/inference
           ref: main
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0           # 获取完整的历史记录，而不只是最新提交
@@ -27,28 +27,52 @@ jobs:
           echo "repo_name=$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           echo "lib_name=lib$repo_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Build Dynamic Library ContainerOCRService for Windows With Docker
+      - name: Build Dynamic Library Inference CUDA for Windows With Docker
         shell: pwsh
         run: |
-          echo "Build Dynamic Library ContainerOCRService for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-          docker run --rm --name build  -v ${PWD}:C:\app -w C:\app jadehh/container_ocr_service:1.0.0-windows2022 cmd /c `
-          "call `"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat`" x64 && pwsh -NoProfile -File C:\app\templates\build.ps1"
-          echo "Build Dynamic Library ContainerOCRService for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "Build Dynamic Library Inference CUDA  for Windows 构建开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          docker run --rm --name build_shared -v ${PWD}:c:\app -w /app ghcr.io/jadehh/inference:1.0.0-cuda12-windows2022 pwsh -Command "
+            & C:\\scripts\\start-with-h-drive.cmd;
+            vcpkg integrate remove;
+            git config --global --add safe.directory C:/app/
+            mkdir -Force build-inference-cuda-12-windows && cd build-inference-cuda-12-windows;
+            `$commonArgs = @(
+                              '..',
+                              '-A','x64'
+                              '-D','CUDA_DIR=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8',
+                              '-D', 'CLIPPER_DIR=C:\vcpkg\installed',
+                              '-D','TENSORRT_DIR=C:\SDKS\TensorRT-10.6.0.26',
+                              '-D','OPENCV_DIR=C:\vcpkg\installed',
+                              '-D','CMAKE_INSTALL_PREFIX=../inference-cuda12-windows'
+                              '-D','CUDA_ARCH_BIN=61;75');
+            cmake `$commonArgs
+            cmake --build . --config Release --target install;
+            cd ../ && cmd /c 'rmdir /s /q build-inference-cuda-12-windows;'" 
+          echo "Build Dynamic Library Inference CUDA  for Windows 构建结束时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
+      - name: Zip File
+        run: |
+          # 打包 Windows 版本
+          # 压缩 cuda 包
+          7z a ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip inference-cuda12-windows/
+          cd inference-cuda12-windows/x64-windows/bin/ ; 7z a ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip * ; mv ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip ../../../; cd ../../../
+          certutil -hashfile ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip MD5 > ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip.md5
 
       - name: Generate Windows Download Information
         run: |
           cmake -D OUTPUT_FILE=RELEASE_NOTES.md -P cmake/extractChangelog.cmake
-          cp container-ocr-service/Release/container-ocr-service.exe ./
-          # container-ocr-service 信息
-          $file= "container-ocr-service.exe"
-          $md5 = Get-Content "$file.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
-          $download_url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file"
+          
+          # inference cuda runtime 信息
+          $file_cuda_12 = "${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip"
+          $md5_cuda_12 = Get-Content "$file_cuda_12.md5" | Select-String -Pattern '[0-9a-f]{32}' | ForEach-Object { $_.Matches.Value }
+          $download_url_cuda_12 = "https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.tag_name }}/$file_cuda_12"
           $json = @{
             platform = "windows"
             tag_name = "${{ steps.get_version.outputs.tag_name }}"
             packages = @(
-              @{name="container-ocr-service"; file = $file; md5 = $md5; download_url = $download_url },
+              @{name="slim"; file = $file_slim; md5 = $md5_slim; download_url = $download_url_slim },
+              @{name="cpu"; file = $file_cpu; md5 = $md5_cpu; download_url = $download_url_cpu },
+              @{name="cuda12"; file = $file_cuda_12; md5 = $md5_cuda_12; download_url = $download_url_cuda_12 }
             )
           }
           $json | ConvertTo-Json -Depth 3 | Out-File -FilePath windows.json -Encoding utf8
@@ -62,7 +86,8 @@ jobs:
           name: "${{ steps.get_version.outputs.tag_name }}"
           body_path: "RELEASE_NOTES.md"
           files: |
-            container-ocr-service.exe
+            ${{ steps.get_version.outputs.tag_name }}-cuda12-windows.zip
+            ${{ steps.get_version.outputs.tag_name }}-runtime-cuda12-windows.zip
             windows.json
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
